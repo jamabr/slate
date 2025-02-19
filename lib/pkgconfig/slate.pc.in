@@ -14,5 +14,5 @@ Cflags: #CXXFLAGS -I${includedir}
 # Some platforms require CUDA LIBS to be public.
 Libs: -L${libdir} -Wl,-rpath,${libdir} -lslate #LDFLAGS #LIBS
 Libs.private:
-Requires:
+Requires: blaspp lapackpp
 Requires.private:
