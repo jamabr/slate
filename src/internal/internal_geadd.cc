@@ -52,6 +52,19 @@ void add(internal::TargetType<Target::HostTask>,
     assert(A_mt == B.mt());
     assert(A_nt == B.nt());
 
+    // tile layout is same, but they might be on different ranks
+    // communication required
+    for (int64_t i = 0; i < A_mt; ++i) {
+        for (int64_t j = 0; j < A_nt; ++j) {
+            if (A.tileIsLocal(i, j) && !B.tileIsLocal(i, j)) {
+                A.tileSend(i, j, B.tileRank(i,j));
+            }
+            if ((A.mpiRank() == B.tileRank(i,j)) && !A.tileIsLocal(i, j)) {
+                A.tileRecv(i, j, A.tileRank(i,j), A.layout() );
+            }
+        }
+    }
+
     #pragma omp taskgroup
     for (int64_t i = 0; i < A_mt; ++i) {
         for (int64_t j = 0; j < A_nt; ++j) {
@@ -69,6 +82,7 @@ void add(internal::TargetType<Target::HostTask>,
             }
         }
     }
+    A.clearWorkspace();
 }
 
 //------------------------------------------------------------------------------

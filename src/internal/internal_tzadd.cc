@@ -31,7 +31,7 @@ void add(scalar_t alpha, BaseTrapezoidMatrix<scalar_t>&& A,
 
 //------------------------------------------------------------------------------
 /// Trapezoidal matrix add.
-/// assumes A & B have same tile layout and dimensions, and have same distribution
+/// assumes A & B have same tile layout and dimensions
 /// TODO handle transpose A case
 /// Host OpenMP task implementation.
 /// @ingroup add_internal
@@ -53,6 +53,12 @@ void add(internal::TargetType<Target::HostTask>,
     if (B.uplo() == Uplo::Lower) {
         for (int64_t j = 0; j < A_nt; ++j) {
             for (int64_t i = j; i < A_mt; ++i) {
+                if (A.tileIsLocal(i, j) && !B.tileIsLocal(i, j)) {
+                    A.tileSend(i, j, B.tileRank(i,j));
+                }
+                if ((A.mpiRank() == B.tileRank(i,j)) && !A.tileIsLocal(i, j)) {
+                    A.tileRecv(i, j, A.tileRank(i,j), A.layout() );
+                }
                 if (B.tileIsLocal(i, j)) {
                     #pragma omp task slate_omp_default_none \
                         shared( A, B ) \
@@ -71,6 +77,12 @@ void add(internal::TargetType<Target::HostTask>,
     else { // upper
         for (int64_t j = 0; j < A.nt(); ++j) {
             for (int64_t i = 0; i <= j && i < A.mt(); ++i) {
+                if (A.tileIsLocal(i, j) && !B.tileIsLocal(i, j)) {
+                    A.tileSend(i, j, B.tileRank(i,j));
+                }
+                if ((A.mpiRank() == B.tileRank(i,j)) && !A.tileIsLocal(i, j)) {
+                    A.tileRecv(i, j, A.tileRank(i,j), A.layout() );
+                }
                 if (A.tileIsLocal(i, j)) {
                     #pragma omp task slate_omp_default_none \
                         shared( A, B ) \
@@ -85,6 +97,7 @@ void add(internal::TargetType<Target::HostTask>,
                 }
             }
         }
+        A.clearWorkspace();
     }
     // end omp taskgroup
 }
