@@ -82,6 +82,7 @@ void add(internal::TargetType<Target::HostTask>,
             }
         }
     }
+    A.clearWorkspace();
 }
 
 //------------------------------------------------------------------------------

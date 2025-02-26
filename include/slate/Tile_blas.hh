@@ -793,8 +793,10 @@ void add(
 
     // todo: relax these assumptions, by adjusting the loops below
     assert(X.op() == Y.op());
-    assert(X.uploPhysical() == Uplo::General);
-    assert(Y.uploPhysical() == Uplo::General);
+    // NOTE: to make this function more usable, just add the tiles, even the unused part
+    // assert(X.uploPhysical() == Uplo::General);
+    // assert(Y.uploPhysical() == Uplo::General);
+    assert(Y.uploPhysical() == X.uploPhysical());
 
     int64_t y_col_inc = Y.colIncrement();
     int64_t y_row_inc = Y.rowIncrement();
